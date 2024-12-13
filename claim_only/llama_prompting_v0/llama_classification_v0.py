@@ -3,7 +3,6 @@ import pickle
 import ast
 import csv
 import pandas as pd
-from sklearn.metrics import accuracy_score, f1_score
 
 
 def claim_only_llm(claim):
@@ -46,8 +45,8 @@ def claim_only_llm(claim):
 
 
 # !!! THESE TOKENS SHOULD BE KEPT PRIVATE AND NOT SHARED !!!
-cloudfare_api = "INSERT CLOUDFARE API"
-account_id = "INSERT ACCOUNT ID"
+cloudfare_api = "CLOUDFARE API"
+account_id = "ACCOUNT ID"
 
 
 API_BASE_URL = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/"
@@ -74,7 +73,7 @@ def send_request(instruction, content):
 def str_to_lst(response):
     try:
         response = ast.literal_eval(response)
-        if len(response) != 3:
+        if not isinstance(response, list) or len(response) != 3:
             return False
         # print(response)
         # print(type(response[0]))
@@ -83,14 +82,16 @@ def str_to_lst(response):
             # print(stripped)
             if stripped == "true": # here i convert the true/false strings to boolean values
                 response[0] = True
+                return response
             elif stripped == "false":
                 response[0] = False
-            else:
-                return False
-        return response
+                return response
+        else:
+            return False
     except (ValueError, SyntaxError) as e:
         print(f"Error parsing response string: {e}")
         return False
+
 
 def write_to_csv(filename, claim, true_output, predicted_output):
     fieldnames = ["claim", "true_output", "predicted_output"]
@@ -105,44 +106,31 @@ def write_to_csv(filename, claim, true_output, predicted_output):
         writer.writerow({"claim": claim, "true_output": true_output, "predicted_output": predicted_output})
 
 
-with open('claim_only/factkg-dataset/factkg_test.pickle', 'rb') as file:
+with open('claim_only/factkg_dataset/factkg_test.pickle', 'rb') as file:
     # there is this 946th claim that contains some harmful information that llm refuse to answer
     data = pickle.load(file)
 
-# # print(len(data.items()))
-i = 0
-for claim, information in data.items():
-    if i < 3861: # this is to avoid the 946th claim that is harmful
-        i += 1
-        continue
-    instruction, content = claim_only_llm(claim)
-    response = send_request(instruction, content)
-    print(response)
-    print("Claim: ", claim)
-    print("Original Response: ",response)
+print(len(data.items()))
+# i = 0
+# for claim, information in data.items():
+#     if i < 8932: # this is to avoid the 946th claim that is harmful
+#         i += 1
+#         continue
+#     instruction, content = claim_only_llm(claim)
+#     response = send_request(instruction, content)
+#     print(response)
+#     print("Claim: ", claim)
+#     print("Original Response: ",response)
 
-    response = str_to_lst(response) # try to convert the response into an actual list
-    while not response: # if not in the correct format
-        response = send_request(instruction, content)
-        response = str_to_lst(response)
+#     response = str_to_lst(response) # try to convert the response into an actual list
+#     while not response: # if not in the correct format
+#         response = send_request(instruction, content)
+#         response = str_to_lst(response)
 
-    true_label = information['Label'][0]
-    # print(information['types'])
-    predicted_label = response[0]
-#     print(type(predicted_label))
+#     true_label = information['Label'][0]
+#     # print(information['types'])
+#     predicted_label = response[0]
+# #     print(type(predicted_label))
 
-    # reasoning_type = information['types']
-    write_to_csv("claim_only/first-iteration-csv", claim, true_label, predicted_label)
-
-# GET RID OF 3864 AND 3865
-
-    
-# df = pd.read_csv('claim_only/first-iteration-csv')
-# df['predicted_output'] = df['predicted_output'].astype(bool)
-
-# accuracy = accuracy_score(df['true_output'], df['predicted_output'])
-# print(f"Accuracy: {accuracy}")
-# f1 = f1_score(df['true_output'], df['predicted_output'])
-# print(f"F1-Score: {f1}")
-
-
+#     # reasoning_type = information['types']
+#     write_to_csv("claim_only/first_iteration.csv", claim, true_label, predicted_label)

@@ -1,9 +1,9 @@
 import pickle
 
 data_files = {
-    'test': 'claim_only/factkg-dataset/factkg_test.pickle',
-    'train': 'claim_only/factkg-dataset/factkg_train.pickle',
-    'dev': 'claim_only/factkg-dataset/factkg_dev.pickle'
+    'test': 'claim_only/factkg_dataset/factkg_test.pickle',
+    'train': 'claim_only/factkg_dataset/factkg_train.pickle',
+    'dev': 'claim_only/factkg_dataset/factkg_dev.pickle'
 }
 data = {key: pickle.load(open(path, 'rb')) for key, path in data_files.items()}
 
